@@ -1,7 +1,8 @@
 .idea
-venv
+vendor
+composer.lock
 .envrc
-__pycache__
-*.egg-info
-dist
-docs/_build
+.phpunit.result.cache
+.phpunit.cache
+/node_modules
+.DS_Store
