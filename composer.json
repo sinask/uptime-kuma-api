@@ -1,5 +1,5 @@
 {
-    "name": "uptime-kuma/laravel-api",
+    "name": "sinask/laravel-api",
     "description": "Laravel wrapper for the Uptime Kuma API",
     "type": "library",
     "license": "MIT",
