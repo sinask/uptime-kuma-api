@@ -1,70 +1,71 @@
-# uptime-kuma-api
+# Laravel Uptime Kuma API
 
-A wrapper for the Uptime Kuma Socket.IO API
----
-uptime-kuma-api is a Python wrapper for the [Uptime Kuma](https://github.com/louislam/uptime-kuma) Socket.IO API.
+A Laravel-friendly wrapper around the [Uptime Kuma](https://github.com/louislam/uptime-kuma) API. The package offers a
+simple service class and facade that can be used from any Laravel application to manage monitors, notifications and
+status pages without dealing with the underlying Socket.IO protocol.
 
-This package was developed to configure Uptime Kuma with Ansible. The Ansible collection can be found at https://github.com/lucasheld/ansible-uptime-kuma.
+## Installation
 
-Python version 3.7+ is required.
-
-Supported Uptime Kuma versions:
-
-| Uptime Kuma     | uptime-kuma-api |
-|-----------------|-----------------|
-| 1.21.3 - 1.23.2 | 1.0.0 - 1.2.1   |
-| 1.17.0 - 1.21.2 | 0.1.0 - 0.13.0  |
-
-Installation
----
-uptime-kuma-api is available on the [Python Package Index (PyPI)](https://pypi.org/project/uptime-kuma-api/).
-
-You can install it using pip:
-
-```
-pip install uptime-kuma-api
+```bash
+composer require uptime-kuma/laravel-api
 ```
 
-Documentation
----
-The API Reference is available on [Read the Docs](https://uptime-kuma-api.readthedocs.io).
+If you plan to customise the configuration publish the package config file:
 
-Example
----
-Once you have installed the python package, you can use it to communicate with an Uptime Kuma instance.
-
-To do so, import `UptimeKumaApi` from the library and specify the Uptime Kuma server url (e.g. 'http://127.0.0.1:3001'), username and password to initialize the connection.
-
-```python
->>> from uptime_kuma_api import UptimeKumaApi, MonitorType
->>> api = UptimeKumaApi('INSERT_URL')
->>> api.login('INSERT_USERNAME', 'INSERT_PASSWORD')
+```bash
+php artisan vendor:publish --tag=uptime-kuma-config
 ```
 
-Now you can call one of the existing methods of the instance. For example create a new monitor:
+The configuration file exposes the connection settings that are read from the environment by default:
 
-```python
->>> result = api.add_monitor(type=MonitorType.HTTP, name="Google", url="https://google.com")
->>> print(result)
-{'msg': 'Added Successfully.', 'monitorId': 1}
+```php
+return [
+    'base_url' => env('UPTIME_KUMA_URL', 'http://127.0.0.1:3001'),
+    'username' => env('UPTIME_KUMA_USERNAME'),
+    'password' => env('UPTIME_KUMA_PASSWORD'),
+    'two_factor_token' => env('UPTIME_KUMA_TOKEN'),
+];
 ```
 
-At the end, the connection to the API must be disconnected so that the program does not block.
+## Usage
 
-```python
->>> api.disconnect()
+```php
+use UptimeKuma\LaravelApi\Facades\UptimeKuma;
+use UptimeKuma\LaravelApi\Support\MonitorType;
+
+// the client will use the configured credentials and automatically login
+$monitors = UptimeKuma::monitors();
+
+// create a new monitor
+UptimeKuma::createMonitor([
+    'name' => 'Google',
+    'type' => MonitorType::HTTP->value,
+    'url' => 'https://google.com',
+]);
+
+// pause a monitor
+UptimeKuma::pauseMonitor(1);
+
+// resume it when you are ready
+UptimeKuma::resumeMonitor(1);
 ```
 
-With a context manager, the disconnect method is called automatically:
+You can resolve the underlying client manually if you prefer dependency injection:
 
-```python
-from uptime_kuma_api import UptimeKumaApi
+```php
+use UptimeKuma\LaravelApi\Http\UptimeKumaClient;
 
-with UptimeKumaApi('INSERT_URL') as api:
-    api.login('INSERT_USERNAME', 'INSERT_PASSWORD')
-    api.add_monitor(
-        type=MonitorType.HTTP,
-        name="Google",
-        url="https://google.com"
-    )
+public function __construct(private UptimeKumaClient $client)
+{
+}
 ```
+
+## Testing
+
+Run the package test suite locally with:
+
+```bash
+composer test
+```
+
+The test suite relies on mocked HTTP responses and does not require a running Uptime Kuma instance.
